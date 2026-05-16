@@ -1,136 +1,270 @@
-# CodexTool
+# CodexFree - ChatGPT 自动注册工具
 
-ChatGPT 手机号注册 & Codex OAuth Token 获取。纯 API 调用，最小化浏览器依赖（仅 Sentinel 提取需 Playwright）。
+一个用于自动化 ChatGPT 账号注册的 Python 工具，支持批量注册、代理配置和 Cloudflare 绕过。
+
+## 功能特性
+
+- 🤖 **自动化注册**: 完全自动化的 ChatGPT 账号注册流程
+- 🔄 **批量处理**: 支持一次性注册多个账号
+- 🌐 **代理支持**: 内置代理配置，支持 HTTP/HTTPS/SOCKS5 代理
+- 🛡️ **Cloudflare 绕过**: 使用 Playwright + Stealth 插件绕过 Cloudflare 验证
+- 📱 **短信转发**: 可选的短信验证码转发功能（Bark）
+- 💾 **结果保存**: 自动保存成功和失败的注册记录
+- 🎯 **Sentinel 令牌**: 自动提取和缓存 Cloudflare Sentinel 令牌
+
+## 系统要求
+
+- Python 3.8+
+- Playwright 浏览器驱动
+- Windows/Linux/macOS
+
+## 安装步骤
+
+### 1. 克隆仓库
+
+```bash
+git clone https://github.com/KubaZzZo/CodexFree.git
+cd CodexFree
+```
+
+### 2. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 安装 Playwright 浏览器
+
+```bash
+playwright install chromium
+```
+
+### 4. 配置文件
+
+复制示例配置文件并编辑：
+
+```bash
+cp config.example.json config.json
+```
+
+编辑 `config.json`：
+
+```json
+{
+    "phone_number": "+86 138 0000 0000",
+    "proxy": {
+        "default": "http://username:password@proxy.example.com:8080"
+    },
+    "sms_forward": {
+        "enabled": false,
+        "bark_url": ""
+    },
+    "headless": false,
+    "auto_confirm_sms": false
+}
+```
+
+## 使用方法
+
+### 基本命令
+
+#### 注册单个账号
+
+```bash
+python main.py register
+```
+
+#### 批量注册
+
+```bash
+python main.py register --count 5
+```
+
+#### 登录已有账号
+
+```bash
+python main.py login
+```
+
+#### 注册并登录
+
+```bash
+python main.py all --count 3
+```
+
+### 命令行参数
+
+- `register`: 注册新账号
+- `login`: 登录已有账号
+- `all`: 注册并登录
+- `--count N`: 批量处理数量（默认为 1）
 
 ## 项目结构
 
 ```
-codextool/
-├── config.example.json   # 配置模板（可提交 git）
-├── config.json           # 实际配置（敏感信息，gitignore）
-├── .gitignore
-├── main.py               # 主入口（register / login / all）
-├── sentinel.py           # 共享模块：Cloudflare sentinel 提取 + 代理配置
-├── chatgpt_register.py   # ChatGPT 手机号注册（API）
-├── codex_login.py        # Codex OAuth 登录（API）
-├── tokens/               # Token 输出（auth_{phone}.json）
-├── success/              # 注册成功记录
-└── fail/                 # 失败记录
+CodexFree/
+├── main.py                 # 主程序入口
+├── chatgpt_register.py     # ChatGPT 注册逻辑
+├── codex_login.py          # Codex 登录逻辑
+├── sentinel.py             # Sentinel 令牌提取
+├── email_api.py            # 邮箱 API 接口
+├── register_gui.py         # GUI 界面（可选）
+├── config.json             # 配置文件（需自行创建）
+├── config.example.json     # 配置文件示例
+├── requirements.txt        # Python 依赖
+├── .gitignore             # Git 忽略规则
+└── README.md              # 项目说明
 ```
 
-## 环境
+## 配置说明
 
-```bash
-pip install curl_cffi playwright
-playwright install chromium
-```
+### 基础配置
 
-## 配置
+- **phone_number**: 用于注册的手机号码（国际格式）
+- **headless**: 是否使用无头模式运行浏览器（true/false）
+- **auto_confirm_sms**: 是否自动确认短信验证码（true/false）
 
-复制 `config.example.json` → `config.json`，填入实际值：
+### 代理配置
 
-| 配置路径 | 说明 |
-|----------|------|
-| `skymail.admin_email` | SkyMail 邮箱账号 |
-| `skymail.admin_password` | SkyMail 邮箱密码 |
-| `phone_sms.provider` | 接码平台选择：`herosms` 或 `fivesim` |
-| `phone_sms.herosms_api_key` | HeroSMS API Key |
-| `phone_sms.fivesim_api_key` | 5sim API Key（Bearer Token） |
-| `phone_sms.country` | 指定国家码（留空自动选最低价） |
-| `phone_sms.max_price` | 单个手机号最高价格（USD） |
-| `phone_sms.min_price` | 最低可信价格（低于此过滤掉） |
-| `proxy.default` | HTTP 代理 URL（留空不走代理） |
-| `registration.password_suffix` | 密码后缀（`!A1` 满足 OpenAI 复杂度） |
+支持多种代理格式：
 
-### 接码平台切换
-
-修改 `phone_sms.provider` 字段即可：
-
-- `"herosms"` — HeroSMS（SMS-Activate 兼容 API）
-- `"fivesim"` — 5sim.net
-
-两套 API 完全并行实现，切换后自动路由到对应服务商，无需改代码。
-
-### 代理策略
-
-- **注册流程**（`chatgpt_register.py`）：HeroSMS / 5sim / OpenAI 注册 API 均走代理
-- **Codex 登录**（`codex_login.py`）：全程直连，不走代理
-- **SkyMail**：全程直连，不走代理
-
-代理在 `config.json` 中配置 `proxy.default`，留空则全部直连。
-
-## 使用
-
-### 主入口 `main.py`
-
-```bash
-# 注册 + 登录一条龙（默认）
-python main.py
-
-# 只注册，不登录
-python main.py register
-
-# 只登录已有账号
-python main.py login --phone +573238903957 --password 'A8i6HDvW9!A1'
-
-# 批量注册 + 登录
-python main.py all --count 3
-```
-
-### 独立脚本
-
-```bash
-# 注册
-python chatgpt_register.py --count 1
-python chatgpt_register.py --no-codex          # 只注册不登录
-
-# 登录
-python codex_login.py --phone +573238903957 --password 'xxx'
-```
-
-## 输出文件
-
-| 文件 | 来源 | 内容 |
-|------|------|------|
-| `tokens/auth_{phone}.json` | Codex 登录 | access_token, refresh_token, account_id |
-| `tokens/codex-{phone}.json` | Codex 登录 | 同上（按手机号命名） |
-| `success/chatgpt_{phone}_{timestamp}.json` | 注册成功 | 手机号、密码、姓名、邮箱、token |
-
-Token 格式：
 ```json
 {
-  "auth_mode": "chatgpt",
-  "OPENAI_API_KEY": null,
-  "tokens": {
-    "id_token": "eyJ...",
-    "access_token": "eyJ...",
-    "refresh_token": "rt_...",
-    "account_id": "user-XXX"
-  },
-  "last_refresh": "2026-05-15T07:30:04Z"
+    "proxy": {
+        "default": "http://username:password@proxy.example.com:8080"
+    }
 }
 ```
 
-## API 登录流程
+代理格式示例：
+- HTTP: `http://user:pass@host:port`
+- HTTPS: `https://user:pass@host:port`
+- SOCKS5: `socks5://user:pass@host:port`
 
+### 短信转发配置
+
+如果需要将验证码转发到手机：
+
+```json
+{
+    "sms_forward": {
+        "enabled": true,
+        "bark_url": "https://api.day.app/your_key/"
+    }
+}
 ```
-Sentinel 提取 → OAuth 重定向 → /log-in (CSRF cookie)
-  → POST /api/accounts/authorize/continue     (手机号)
-  → GET  /api/accounts/client_auth_session_dump
-  → POST /api/accounts/password/verify        (密码)
-  → POST /api/accounts/add-email/send         (绑定邮箱，仅首次)
-  → POST /api/accounts/email-otp/validate     (邮箱验证码)
-  → POST /api/accounts/workspace/select       (工作区)
-  → 跟随 consent 重定向链 → authorization_code
-  → POST /oauth/token → access_token + refresh_token
+
+## 高级功能
+
+### Sentinel 令牌缓存
+
+工具会自动提取并缓存 Cloudflare Sentinel 令牌到 `sentinel_cache.json`，避免重复提取。缓存有效期为 24 小时。
+
+### 结果保存
+
+- 成功的注册记录保存在 `success/` 目录
+- 失败的记录保存在 `fail/` 目录
+- 每条记录包含时间戳和详细信息
+
+### 代理会话管理
+
+对于支持会话的代理服务（如 1024proxy），工具会自动管理会话 ID：
+
+```python
+# 会话格式示例
+username-region-Rand-sid-{random_id}-t-{minutes}:password
 ```
 
-## 关键实现
+## 故障排除
 
-1. **Cookie 分离**：sentinel cookies 中仅保留 Cloudflare 相关（`cf_clearance`, `__cf_bm` 等），Auth 类 cookie 由 OAuth 重定向重新签发
-2. **openai-sentinel-token 头**：每个 API 请求必须携带，否则 401
-3. **CSRF**：显式 GET `/log-in` 获取与 session 匹配的 CSRF cookie
-4. **邮箱双场景**：首次走 add-email 绑定新邮箱，再次从 session dump 获取已绑定邮箱
-5. **Sentinel 缓存**：10 分钟内复用，避免重复 Playwright 开销；注册和登录间自动复用
-6. **双接码平台**：HeroSMS / 5sim 自动路由，通过 `provider` 字段切换
-7. **代理分层**：注册走代理（防 OpenAI 风控），登录和 SkyMail 直连
+### 常见问题
+
+#### 1. Playwright 浏览器未安装
+
+```bash
+playwright install chromium
+```
+
+#### 2. 代理连接失败
+
+- 检查代理地址和端口是否正确
+- 确认代理服务器是否在线
+- 验证用户名和密码是否正确
+- 检查代理服务器的 IP 白名单设置
+
+#### 3. Cloudflare 验证失败
+
+- 确保已安装 `playwright-stealth`
+- 尝试降低请求频率
+- 检查代理 IP 是否被封禁
+
+#### 4. 短信验证码接收失败
+
+- 确认手机号格式正确（国际格式）
+- 检查短信转发配置
+- 验证 Bark URL 是否有效
+
+### 调试模式
+
+设置 `headless: false` 可以看到浏览器操作过程，便于调试：
+
+```json
+{
+    "headless": false
+}
+```
+
+## 安全注意事项
+
+⚠️ **重要提示**：
+
+1. **不要将 `config.json` 提交到 Git 仓库**
+2. **不要分享包含真实凭据的配置文件**
+3. **定期更换代理密码**
+4. **使用强密码保护账号**
+5. **遵守 OpenAI 服务条款**
+
+`.gitignore` 已配置忽略敏感文件：
+- `config.json`
+- `sentinel_cache.json`
+- `success/` 和 `fail/` 目录
+- `tokens/` 目录
+
+## 依赖项
+
+主要依赖包：
+
+- `playwright>=1.40.0` - 浏览器自动化
+- `playwright-stealth>=1.0.0` - Cloudflare 绕过
+- `requests>=2.31.0` - HTTP 请求
+- `curl-cffi>=0.5.0` - cURL 模拟
+- `PySocks>=1.7.1` - SOCKS 代理支持
+
+完整依赖列表见 `requirements.txt`。
+
+## 贡献指南
+
+欢迎提交 Issue 和 Pull Request！
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+## 许可证
+
+本项目仅供学习和研究使用。使用本工具时请遵守相关法律法规和服务条款。
+
+## 免责声明
+
+本工具仅用于技术研究和学习目的。使用者需自行承担使用本工具的一切风险和责任。作者不对因使用本工具而产生的任何直接或间接损失负责。
+
+## 联系方式
+
+- GitHub: [@KubaZzZo](https://github.com/KubaZzZo)
+- 项目地址: [https://github.com/KubaZzZo/CodexFree](https://github.com/KubaZzZo/CodexFree)
+
+---
+
+⭐ 如果这个项目对你有帮助，请给个 Star！
