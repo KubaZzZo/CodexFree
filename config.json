@@ -1,0 +1,12 @@
+{
+    "phone_number": "+86 131 8888 8888",
+    "proxy": {
+        "default": ""
+    },
+    "sms_forward": {
+        "enabled": false,
+        "bark_url": ""
+    },
+    "headless": false,
+    "auto_confirm_sms": false
+}

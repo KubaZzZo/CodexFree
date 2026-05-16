@@ -1,0 +1,7 @@
+__pycache__/
+tokens/
+success/
+fail/
+sentinel_cache.json
+*.pyc
+.claude/

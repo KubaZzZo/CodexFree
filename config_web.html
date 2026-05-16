@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodexFree 配置管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .content { padding: 30px; }
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #667eea; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 500; color: #555; margin-bottom: 6px; }
+        .form-group label .required { color: #e74c3c; margin-left: 3px; }
+        .form-group label .hint { font-weight: 400; color: #999; font-size: 12px; margin-left: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; }
+        .form-group input[type="number"] { width: 150px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .btn { padding: 12px 24px; border: none; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .alert { padding: 12px 16px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .provider-toggle { display: flex; gap: 10px; margin-bottom: 15px; }
+        .provider-toggle button { flex: 1; padding: 10px; border: 2px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .provider-toggle button.active { border-color: #667eea; background: #667eea; color: white; }
+        .provider-section { display: none; }
+        .provider-section.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 CodexFree 配置管理</h1>
+            <p>配置 ChatGPT 自动注册所需的邮件和短信服务</p>
+        </div>
+
+        <div class="content">
+            <div id="alert"></div>
+
+            <form id="configForm">
+                <!-- 邮件服务配置 -->
+                <div class="section">
+                    <div class="section-title">📧 邮件服务配置</div>
+
+                    <div class="form-group">
+                        <label>选择邮件提供商</label>
+                        <div class="provider-toggle">
+                            <button type="button" class="mail-provider active" data-provider="skymail">SkyMail</button>
+                            <button type="button" class="mail-provider" data-provider="shanmail">ShanMail</button>
+                        </div>
+                    </div>
+
+                    <div class="provider-section active" id="skymail-section">
+                        <div class="form-group">
+                            <label>SkyMail API 地址</label>
+                            <input type="text" name="skymail_base_url" value="https://api.skymail.com" placeholder="https://api.skymail.com">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>管理员邮箱 <span class="required">*</span></label>
+                                <input type="email" name="skymail_admin_email" placeholder="admin@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label>管理员密码 <span class="required">*</span></label>
+                                <input type="password" name="skymail_admin_password" placeholder="输入密码" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="provider-section" id="shanmail-section">
+                        <div class="form-group">
+                            <label>ShanMail API 地址</label>
+                            <input type="text" name="shanmail_base_url" value="https://shanyouxiang.com" placeholder="https://shanyouxiang.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Bearer Token <span class="required">*</span></label>
+                            <input type="text" name="shanmail_token" placeholder="your_bearer_token_here">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>邮件域名 <span class="hint">(用于生成临时邮箱)</span></label>
+                        <input type="text" name="mail_domain" value="example.com" placeholder="example.com">
+                    </div>
+                </div>
+
+                <!-- 短信服务配置 -->
+                <div class="section">
+                    <div class="section-title">📱 短信接码配置</div>
+
+                    <div class="form-group">
+                        <label>选择短信提供商</label>
+                        <div class="provider-toggle">
+                            <button type="button" class="sms-provider active" data-provider="herosms">HeroSMS</button>
+                            <button type="button" class="sms-provider" data-provider="fivesim">5sim</button>
+                        </div>
+                    </div>
+
+                    <div class="provider-section active" id="herosms-section">
+                        <div class="form-group">
+                            <label>HeroSMS API Key <span class="required">*</span> <span class="hint">从 https://hero-sms.com 获取</span></label>
+                            <input type="text" name="herosms_api_key" placeholder="your_herosms_api_key_here">
+                        </div>
+                    </div>
+
+                    <div class="provider-section" id="fivesim-section">
+                        <div class="form-group">
+                            <label>5sim API Key <span class="required">*</span> <span class="hint">从 https://5sim.net 获取</span></label>
+                            <input type="text" name="fivesim_api_key" placeholder="your_5sim_api_key_here">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>最高价格限制 (USD)</label>
+                            <input type="number" name="max_price" value="0.08" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>最低价格限制 (USD)</label>
+                            <input type="number" name="min_price" value="0.04" step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ChatGPT 配置 -->
+                <div class="section">
+                    <div class="section-title">🤖 ChatGPT 配置</div>
+
+                    <div class="form-group">
+                        <label>Chat Web Client ID</label>
+                        <input type="text" name="chat_web_client_id" placeholder="your_chat_web_client_id">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Codex Client ID</label>
+                        <input type="text" name="codex_client_id" placeholder="your_codex_client_id">
+                    </div>
+                </div>
+
+                <!-- 注册信息 -->
+                <div class="section">
+                    <div class="section-title">👤 注册信息</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>名字</label>
+                            <input type="text" name="first_name" value="John" placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label>姓氏</label>
+                            <input type="text" name="last_name" value="Doe" placeholder="Doe">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>生日</label>
+                            <input type="date" name="birthday" value="1990-01-01">
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" name="password" value="YourSecurePassword123!" placeholder="至少8位">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 超时设置 -->
+                <div class="section">
+                    <div class="section-title">⏱️ 超时设置 (秒)</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>页面加载超时</label>
+                            <input type="number" name="page_load" value="30" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>元素等待超时</label>
+                            <input type="number" name="element_wait" value="10" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>短信轮询超时</label>
+                            <input type="number" name="sms_poll" value="120" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>邮件轮询超时</label>
+                            <input type="number" name="email_poll" value="120" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>轮询间隔</label>
+                        <input type="number" name="poll_interval" value="3" min="1">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 保存配置</button>
+                    <button type="button" class="btn btn-secondary" onclick="loadConfig()">🔄 重新加载</button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadConfig()">⬇️ 下载配置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Provider toggle
+        document.querySelectorAll('.mail-provider').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mail-provider').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('[id$="-section"]').forEach(s => {
+                    if (s.id.startsWith('sky') || s.id.startsWith('shan')) s.classList.remove('active');
+                });
+                document.getElementById(btn.dataset.provider + '-section').classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.sms-provider').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sms-provider').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('[id$="-section"]').forEach(s => {
+                    if (s.id.startsWith('hero') || s.id.startsWith('five')) s.classList.remove('active');
+                });
+                document.getElementById(btn.dataset.provider + '-section').classList.add('active');
+            });
+        });
+
+        // Form submit
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const mailProvider = document.querySelector('.mail-provider.active').dataset.provider;
+            const smsProvider = document.querySelector('.sms-provider.active').dataset.provider;
+
+            const config = {
+                mail: { provider: mailProvider },
+                skymail: {
+                    base_url: formData.get('skymail_base_url'),
+                    admin_email: formData.get('skymail_admin_email'),
+                    admin_password: formData.get('skymail_admin_password')
+                },
+                shanmail: {
+                    base_url: formData.get('shanmail_base_url'),
+                    token: formData.get('shanmail_token')
+                },
+                chatgpt: {
+                    base_url: "https://chatgpt.com",
+                    auth_base_url: "https://auth.openai.com",
+                    chat_base_url: "https://chatgpt.com",
+                    arkose_token_url: "https://tcr9i.chat.openai.com/fc/gt2/public_key/35536E1E-65B4-4D96-9D97-6ADB7EFF8147",
+                    chat_web_client_id: formData.get('chat_web_client_id'),
+                    codex_client_id: formData.get('codex_client_id'),
+                    mail_domain: formData.get('mail_domain')
+                },
+                registration: {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    birthday: formData.get('birthday'),
+                    password: formData.get('password')
+                },
+                phone_sms: {
+                    provider: smsProvider,
+                    herosms_api_key: formData.get('herosms_api_key'),
+                    fivesim_api_key: formData.get('fivesim_api_key'),
+                    max_price: parseFloat(formData.get('max_price')),
+                    min_price: parseFloat(formData.get('min_price')),
+                    blocked_countries: []
+                },
+                timeouts: {
+                    page_load: parseInt(formData.get('page_load')),
+                    element_wait: parseInt(formData.get('element_wait')),
+                    sms_poll: parseInt(formData.get('sms_poll')),
+                    email_poll: parseInt(formData.get('email_poll')),
+                    poll_interval: parseInt(formData.get('poll_interval'))
+                },
+                output: {
+                    save_accounts: true,
+                    accounts_file: "accounts.txt",
+                    save_cookies: true,
+                    cookies_dir: "cookies",
+                    save_screenshots: false,
+                    screenshots_dir: "screenshots"
+                },
+                http: {
+                    proxy: null,
+                    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    user_agent_chrome: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                }
+            };
+
+            localStorage.setItem('codexfree_config', JSON.stringify(config, null, 2));
+            showAlert('配置已保存到浏览器本地存储!', 'success');
+        });
+
+        function loadConfig() {
+            const saved = localStorage.getItem('codexfree_config');
+            if (saved) {
+                const config = JSON.parse(saved);
+                // Load values back to form
+                document.querySelector(`[data-provider="${config.mail.provider}"]`).click();
+                document.querySelector(`.sms-provider[data-provider="${config.phone_sms.provider}"]`).click();
+
+                Object.keys(config).forEach(section => {
+                    if (typeof config[section] === 'object') {
+                        Object.keys(config[section]).forEach(key => {
+                            const input = document.querySelector(`[name="${section}_${key}"]`) || document.querySelector(`[name="${key}"]`);
+                            if (input && config[section][key] !== null) {
+                                input.value = config[section][key];
+                            }
+                        });
+                    }
+                });
+                showAlert('配置已从本地存储加载!', 'success');
+            } else {
+                showAlert('未找到保存的配置', 'error');
+            }
+        }
+
+        function downloadConfig() {
+            const saved = localStorage.getItem('codexfree_config');
+            if (saved) {
+                const blob = new Blob([saved], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'config.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showAlert('配置文件已下载!', 'success');
+            } else {
+                showAlert('没有可下载的配置', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            setTimeout(() => alert.className = '', 3000);
+        }
+    </script>
+</body>
+</html>

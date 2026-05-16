@@ -1,0 +1,65 @@
+{
+  "mail": {
+    "provider": "skymail"
+  },
+
+  "skymail": {
+    "base_url": "https://api.skymail.com",
+    "admin_email": "admin@example.com",
+    "admin_password": "your_password_here"
+  },
+
+  "shanmail": {
+    "base_url": "https://shanyouxiang.com",
+    "token": "your_bearer_token_here"
+  },
+
+  "chatgpt": {
+    "base_url": "https://chatgpt.com",
+    "auth_base_url": "https://auth.openai.com",
+    "chat_base_url": "https://chatgpt.com",
+    "arkose_token_url": "https://tcr9i.chat.openai.com/fc/gt2/public_key/35536E1E-65B4-4D96-9D97-6ADB7EFF8147",
+    "chat_web_client_id": "your_chat_web_client_id",
+    "codex_client_id": "your_codex_client_id",
+    "mail_domain": "example.com"
+  },
+
+  "registration": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "birthday": "1990-01-01",
+    "password": "YourSecurePassword123!"
+  },
+
+  "phone_sms": {
+    "provider": "herosms",
+    "herosms_api_key": "your_herosms_api_key_here",
+    "fivesim_api_key": "your_5sim_api_key_here",
+    "max_price": 0.08,
+    "min_price": 0.04,
+    "blocked_countries": []
+  },
+
+  "timeouts": {
+    "page_load": 30,
+    "element_wait": 10,
+    "sms_poll": 120,
+    "email_poll": 120,
+    "poll_interval": 3
+  },
+
+  "output": {
+    "save_accounts": true,
+    "accounts_file": "accounts.txt",
+    "save_cookies": true,
+    "cookies_dir": "cookies",
+    "save_screenshots": false,
+    "screenshots_dir": "screenshots"
+  },
+
+  "http": {
+    "proxy": null,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "user_agent_chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  }
+}
